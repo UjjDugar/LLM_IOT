@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room with Four Controllable Lights</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            width: 300px;
+            z-index: 100;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .control-group {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .control-group h3 {
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .position-input {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        .position-input input {
+            width: 50px;
+        }
+        .position-input span {
+            min-width: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="control-group">
+            <h3>Global Light</h3>
+            <label for="ambientIntensity">Ambient Light Intensity</label>
+            <input type="range" id="ambientIntensity" min="0" max="1" step="0.01" value="0.3">
+        </div>
+        
+        <div class="control-group">
+            <h3>Light 1</h3>
+            <label for="light1Intensity">Intensity</label>
+            <input type="range" id="light1Intensity" min="0" max="40" step="0.1" value="0.7">
+            <div class="position-input">
+                <span>X:</span>
+                <input type="number" id="light1X" min="-5" max="5" step="0.1" value="2">
+                <span>Y:</span>
+                <input type="number" id="light1Y" min="0" max="5" step="0.1" value="3">
+                <span>Z:</span>
+                <input type="number" id="light1Z" min="-5" max="5" step="0.1" value="2">
+            </div>
+            <label for="light1Color">Light Color</label>
+            <input type="color" id="light1Color" value="#ffffff">
+        </div>
+        
+        <div class="control-group">
+            <h3>Light 2</h3>
+            <label for="light2Intensity">Intensity</label>
+            <input type="range" id="light2Intensity" min="0" max="40" step="0.1" value="0.7">
+            <div class="position-input">
+                <span>X:</span>
+                <input type="number" id="light2X" min="-5" max="5" step="0.1" value="-2">
+                <span>Y:</span>
+                <input type="number" id="light2Y" min="0" max="5" step="0.1" value="3">
+                <span>Z:</span>
+                <input type="number" id="light2Z" min="-5" max="5" step="0.1" value="2">
+            </div>
+            <label for="light2Color">Light Color</label>
+            <input type="color" id="light2Color" value="#ffffff">
+        </div>
+        
+        <div class="control-group">
+            <h3>Light 3</h3>
+            <label for="light3Intensity">Intensity</label>
+            <input type="range" id="light3Intensity" min="0" max="20" step="0.1" value="0.7">
+            <div class="position-input">
+                <span>X:</span>
+                <input type="number" id="light3X" min="-5" max="5" step="0.1" value="2">
+                <span>Y:</span>
+                <input type="number" id="light3Y" min="0" max="5" step="0.1" value="3">
+                <span>Z:</span>
+                <input type="number" id="light3Z" min="-5" max="5" step="0.1" value="-2">
+            </div>
+            <label for="light3Color">Light Color</label>
+            <input type="color" id="light3Color" value="#ffffff">
+        </div>
+        
+        <div class="control-group">
+            <h3>Light 4</h3>
+            <label for="light4Intensity">Intensity</label>
+            <input type="range" id="light4Intensity" min="0" max="20" step="0.1" value="0.7">
+            <div class="position-input">
+                <span>X:</span>
+                <input type="number" id="light4X" min="-5" max="5" step="0.1" value="-2">
+                <span>Y:</span>
+                <input type="number" id="light4Y" min="0" max="5" step="0.1" value="3">
+                <span>Z:</span>
+                <input type="number" id="light4Z" min="-5" max="5" step="0.1" value="-2">
+            </div>
+            <label for="light4Color">Light Color</label>
+            <input type="color" id="light4Color" value="#ffffff">
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x121212);
+        
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 3, 7);
+        
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1, 0);
+        controls.update();
+
+        // Create room
+        const roomSize = 10;
+        const roomHeight = 5;
+        
+        // Floor
+        const floorGeometry = new THREE.PlaneGeometry(roomSize, roomSize);
+        const floorMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x808080, 
+            roughness: 0.7, 
+            metalness: 0.1 
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // Ceiling
+        const ceilingGeometry = new THREE.PlaneGeometry(roomSize, roomSize);
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xf0f0f0, 
+            roughness: 0.8, 
+            metalness: 0.1 
+        });
+        const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = roomHeight;
+        ceiling.receiveShadow = true;
+        scene.add(ceiling);
+        
+        // Walls
+        const wallMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xa0a0a0, 
+            roughness: 0.8, 
+            metalness: 0.1 
+        });
+        
+        // Back wall
+        const backWallGeometry = new THREE.PlaneGeometry(roomSize, roomHeight);
+        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        backWall.position.z = -roomSize / 2;
+        backWall.position.y = roomHeight / 2;
+        backWall.receiveShadow = true;
+        scene.add(backWall);
+        
+        // Front wall
+        const frontWallGeometry = new THREE.PlaneGeometry(roomSize, roomHeight);
+        const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
+        frontWall.position.z = roomSize / 2;
+        frontWall.position.y = roomHeight / 2;
+        frontWall.rotation.y = Math.PI;
+        frontWall.receiveShadow = true;
+        scene.add(frontWall);
+        
+        // Left wall
+        const leftWallGeometry = new THREE.PlaneGeometry(roomSize, roomHeight);
+        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+        leftWall.position.x = -roomSize / 2;
+        leftWall.position.y = roomHeight / 2;
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.receiveShadow = true;
+        scene.add(leftWall);
+        
+        // Right wall
+        const rightWallGeometry = new THREE.PlaneGeometry(roomSize, roomHeight);
+        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+        rightWall.position.x = roomSize / 2;
+        rightWall.position.y = roomHeight / 2;
+        rightWall.rotation.y = -Math.PI / 2;
+        rightWall.receiveShadow = true;
+        scene.add(rightWall);
+        
+        // Add some furniture
+        // Table
+        const tableGeometry = new THREE.BoxGeometry(2, 0.2, 1.5);
+        const tableMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x8B4513, 
+            roughness: 0.7, 
+            metalness: 0.1 
+        });
+        const table = new THREE.Mesh(tableGeometry, tableMaterial);
+        table.position.set(0, 0.8, 0);
+        table.castShadow = true;
+        table.receiveShadow = true;
+        scene.add(table);
+        
+        // Table legs
+        const legGeometry = new THREE.BoxGeometry(0.1, 0.8, 0.1);
+        for (let i = 0; i < 4; i++) {
+            const legX = ((i % 2) * 2 - 1) * 0.9;
+            const legZ = (Math.floor(i / 2) * 2 - 1) * 0.65;
+            const leg = new THREE.Mesh(legGeometry, tableMaterial);
+            leg.position.set(legX, 0.4, legZ);
+            leg.castShadow = true;
+            leg.receiveShadow = true;
+            scene.add(leg);
+        }
+        
+        // Chair
+        const chairSeatGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.8);
+        const chairMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x8B4513, 
+            roughness: 0.8, 
+            metalness: 0.1 
+        });
+        const chairSeat = new THREE.Mesh(chairSeatGeometry, chairMaterial);
+        chairSeat.position.set(0, 0.5, 2);
+        chairSeat.castShadow = true;
+        chairSeat.receiveShadow = true;
+        scene.add(chairSeat);
+        
+        // Chair back
+        const chairBackGeometry = new THREE.BoxGeometry(0.8, 1, 0.1);
+        const chairBack = new THREE.Mesh(chairBackGeometry, chairMaterial);
+        chairBack.position.set(0, 1, 2.35);
+        chairBack.castShadow = true;
+        chairBack.receiveShadow = true;
+        scene.add(chairBack);
+        
+        // Chair legs
+        const chairLegGeometry = new THREE.BoxGeometry(0.05, 0.5, 0.05);
+        for (let i = 0; i < 4; i++) {
+            const legX = ((i % 2) * 2 - 1) * 0.35;
+            const legZ = (Math.floor(i / 2) * 2 - 1) * 0.35 + 2;
+            const chairLeg = new THREE.Mesh(chairLegGeometry, chairMaterial);
+            chairLeg.position.set(legX, 0.25, legZ);
+            chairLeg.castShadow = true;
+            chairLeg.receiveShadow = true;
+            scene.add(chairLeg);
+        }
+        
+        // Vase on table
+        const vaseGeometry = new THREE.CylinderGeometry(0.1, 0.15, 0.4, 16);
+        const vaseMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x4682B4, 
+            roughness: 0.3, 
+            metalness: 0.7 
+        });
+        const vase = new THREE.Mesh(vaseGeometry, vaseMaterial);
+        vase.position.set(0.6, 1.1, 0);
+        vase.castShadow = true;
+        vase.receiveShadow = true;
+        scene.add(vase);
+        
+        // Book on table
+        const bookGeometry = new THREE.BoxGeometry(0.3, 0.05, 0.4);
+        const bookMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xA52A2A, 
+            roughness: 0.9, 
+            metalness: 0 
+        });
+        const book = new THREE.Mesh(bookGeometry, bookMaterial);
+        book.position.set(-0.5, 0.93, 0.2);
+        book.rotation.y = 0.2;
+        book.castShadow = true;
+        book.receiveShadow = true;
+        scene.add(book);
+        
+        // Lights
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+        
+        // Point lights
+        const lights = [
+            { color: 0xffffff, intensity: 0.7, position: { x: 2, y: 3, z: 2 } },    // Red
+            { color: 0xffffff, intensity: 0.7, position: { x: -2, y: 3, z: 2 } },   // Green
+            { color: 0xffffff, intensity: 0.7, position: { x: 2, y: 3, z: -2 } },   // Blue
+            { color: 0xffffff, intensity: 0.7, position: { x: -2, y: 3, z: -2 } }   // Yellow
+        ];
+        
+        const pointLights = [];
+        const pointLightHelpers = [];
+        
+        lights.forEach((light, index) => {
+            const pointLight = new THREE.PointLight(light.color, light.intensity, 20);
+            pointLight.position.set(
+                light.position.x, 
+                light.position.y, 
+                light.position.z
+            );
+            pointLight.castShadow = true;
+            pointLight.shadow.mapSize.width = 1024;
+            pointLight.shadow.mapSize.height = 1024;
+            scene.add(pointLight);
+            
+            const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2);
+            scene.add(pointLightHelper);
+            
+            pointLights.push(pointLight);
+            pointLightHelpers.push(pointLightHelper);
+        });
+        
+        // Control handlers
+        document.getElementById('ambientIntensity').addEventListener('input', function(e) {
+            ambientLight.intensity = parseFloat(e.target.value);
+        });
+        
+        // Light 1 controls
+        document.getElementById('light1Intensity').addEventListener('input', function(e) {
+            pointLights[0].intensity = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('light1X').addEventListener('input', function(e) {
+            pointLights[0].position.x = parseFloat(e.target.value);
+            pointLightHelpers[0].update();
+        });
+        
+        document.getElementById('light1Y').addEventListener('input', function(e) {
+            pointLights[0].position.y = parseFloat(e.target.value);
+            pointLightHelpers[0].update();
+        });
+        
+        document.getElementById('light1Z').addEventListener('input', function(e) {
+            pointLights[0].position.z = parseFloat(e.target.value);
+            pointLightHelpers[0].update();
+        });
+
+        document.getElementById('light1Color').addEventListener('input', function(e) {
+            pointLights[0].color.set(e.target.value);
+            pointLightHelpers[0].update();
+        });
+        
+        // Light 2 controls
+        document.getElementById('light2Intensity').addEventListener('input', function(e) {
+            pointLights[1].intensity = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('light2X').addEventListener('input', function(e) {
+            pointLights[1].position.x = parseFloat(e.target.value);
+            pointLightHelpers[1].update();
+        });
+        
+        document.getElementById('light2Y').addEventListener('input', function(e) {
+            pointLights[1].position.y = parseFloat(e.target.value);
+            pointLightHelpers[1].update();
+        });
+        
+        document.getElementById('light2Z').addEventListener('input', function(e) {
+            pointLights[1].position.z = parseFloat(e.target.value);
+            pointLightHelpers[1].update();
+        });
+
+        document.getElementById('light2Color').addEventListener('input', function(e) {
+            pointLights[1].color.set(e.target.value);
+            pointLightHelpers[1].update();
+        });
+        
+        // Light 3 controls
+        document.getElementById('light3Intensity').addEventListener('input', function(e) {
+            pointLights[2].intensity = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('light3X').addEventListener('input', function(e) {
+            pointLights[2].position.x = parseFloat(e.target.value);
+            pointLightHelpers[2].update();
+        });
+        
+        document.getElementById('light3Y').addEventListener('input', function(e) {
+            pointLights[2].position.y = parseFloat(e.target.value);
+            pointLightHelpers[2].update();
+        });
+        
+        document.getElementById('light3Z').addEventListener('input', function(e) {
+            pointLights[2].position.z = parseFloat(e.target.value);
+            pointLightHelpers[2].update();
+        });
+
+        document.getElementById('light3Color').addEventListener('input', function(e) {
+            pointLights[2].color.set(e.target.value);
+            pointLightHelpers[2].update();
+        });
+        
+        // Light 4 controls
+        document.getElementById('light4Intensity').addEventListener('input', function(e) {
+            pointLights[3].intensity = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('light4X').addEventListener('input', function(e) {
+            pointLights[3].position.x = parseFloat(e.target.value);
+            pointLightHelpers[3].update();
+        });
+        
+        document.getElementById('light4Y').addEventListener('input', function(e) {
+            pointLights[3].position.y = parseFloat(e.target.value);
+            pointLightHelpers[3].update();
+        });
+        
+        document.getElementById('light4Z').addEventListener('input', function(e) {
+            pointLights[3].position.z = parseFloat(e.target.value);
+            pointLightHelpers[3].update();
+        });
+
+        document.getElementById('light4Color').addEventListener('input', function(e) {
+            pointLights[3].color.set(e.target.value);
+            pointLightHelpers[3].update();
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            
+            renderer.setSize(width, height);
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        async function fetchLightSettings() {
+            const response = await fetch("/get_settings");
+            const data = await response.json();
+            return data;
+        }
+
+        fetchLightSettings().then(settings => {
+            // Update ambient light
+            ambientLight.intensity = settings.ambient.intensity;
+
+            // Update each point light
+            settings.light1.intensity && (pointLights[0].intensity = settings.light1.intensity);
+            settings.light1.position && pointLights[0].position.set(settings.light1.position.x, settings.light1.position.y, settings.light1.position.z);
+            settings.light1.color && pointLights[0].color.set(settings.light1.color);
+
+            settings.light2.intensity && (pointLights[1].intensity = settings.light2.intensity);
+            settings.light2.position && pointLights[1].position.set(settings.light2.position.x, settings.light2.position.y, settings.light2.position.z);
+            settings.light2.color && pointLights[1].color.set(settings.light2.color);
+
+            settings.light3.intensity && (pointLights[2].intensity = settings.light3.intensity);
+            settings.light3.position && pointLights[2].position.set(settings.light3.position.x, settings.light3.position.y, settings.light3.position.z);
+            settings.light3.color && pointLights[2].color.set(settings.light3.color);
+
+            settings.light4.intensity && (pointLights[3].intensity = settings.light4.intensity);
+            settings.light4.position && pointLights[3].position.set(settings.light4.position.x, settings.light4.position.y, settings.light4.position.z);
+            settings.light4.color && pointLights[3].color.set(settings.light4.color);
+        });
+
+        function updateLight(light, property, value) {
+            fetch('/update_light', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    light: light,
+                    [property]: value
+                })
+            }).then(response => response.json())
+            .then(data => console.log("Updated:", data));
+        };
+
+        document.getElementById('light1Intensity').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[0].intensity = value;
+            updateLight("light1", "intensity", value);
+        });
+
+        document.getElementById('light1X').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[0].position.x = value;
+            updateLight("light1", "position", {
+                x: value, y: pointLights[0].position.y, z: pointLights[0].position.z
+            });
+        });
+
+        document.getElementById('light1Color').addEventListener('input', function(e) {
+            const value = e.target.value;
+            pointLights[0].color.set(value);
+            updateLight("light1", "color", value);
+        });
+
+        document.getElementById('light2Intensity').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[1].intensity = value;
+            updateLight("light2", "intensity", value);
+        });
+
+        document.getElementById('light2X').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[1].position.x = value;
+            updateLight("light2", "position", {
+            x: value, y: pointLights[1].position.y, z: pointLights[1].position.z
+            });
+        });
+
+        document.getElementById('light2Color').addEventListener('input', function(e) {
+            const value = e.target.value;
+            pointLights[1].color.set(value);
+            updateLight("light2", "color", value);
+        });
+
+        document.getElementById('light3Intensity').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[2].intensity = value;
+            updateLight("light3", "intensity", value);
+        });
+
+        document.getElementById('light3X').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[2].position.x = value;
+            updateLight("light3", "position", {
+            x: value, y: pointLights[2].position.y, z: pointLights[2].position.z
+            });
+        });
+
+        document.getElementById('light3Color').addEventListener('input', function(e) {
+            const value = e.target.value;
+            pointLights[2].color.set(value);
+            updateLight("light3", "color", value);
+        });
+
+        document.getElementById('light4Intensity').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[3].intensity = value;
+            updateLight("light4", "intensity", value);
+        });
+
+        document.getElementById('light4X').addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            pointLights[3].position.x = value;
+            updateLight("light4", "position", {
+            x: value, y: pointLights[3].position.y, z: pointLights[3].position.z
+            });
+        });
+
+        document.getElementById('light4Color').addEventListener('input', function(e) {
+            const value = e.target.value;
+            pointLights[3].color.set(value);
+            updateLight("light4", "color", value);
+        });
+
+        
+        animate();
+    </script>
+</body>
+</html>
